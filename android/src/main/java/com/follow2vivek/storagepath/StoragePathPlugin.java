@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,7 +55,12 @@ public class StoragePathPlugin implements MethodCallHandler {
             Permissions.check(activity, Manifest.permission.READ_EXTERNAL_STORAGE, null, new PermissionHandler() {
                 @Override
                 public void onGranted() {
-                    getImagePaths(result);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getImagePaths(result);
+                        }
+                    }).start();
                 }
 
                 @Override
@@ -65,7 +72,12 @@ public class StoragePathPlugin implements MethodCallHandler {
             Permissions.check(activity, Manifest.permission.READ_EXTERNAL_STORAGE, null, new PermissionHandler() {
                 @Override
                 public void onGranted() {
-                    getVideoPath(result);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getVideoPath(result);
+                        }
+                    }).start();
                 }
 
                 @Override
@@ -77,7 +89,12 @@ public class StoragePathPlugin implements MethodCallHandler {
             Permissions.check(activity, Manifest.permission.READ_EXTERNAL_STORAGE, null, new PermissionHandler() {
                 @Override
                 public void onGranted() {
-                    getFilesPath(result);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getFilesPath(result);
+                        }
+                    }).start();
                 }
 
                 @Override
@@ -89,7 +106,12 @@ public class StoragePathPlugin implements MethodCallHandler {
             Permissions.check(activity, Manifest.permission.READ_EXTERNAL_STORAGE, null, new PermissionHandler() {
                 @Override
                 public void onGranted() {
-                    getAudioPath(result);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getAudioPath(result);
+                        }
+                    }).start();
                 }
 
                 @Override
@@ -103,7 +125,7 @@ public class StoragePathPlugin implements MethodCallHandler {
     }
 
 
-    private void getImagePaths(Result result) {
+    private void getImagePaths(final Result result) {
         filesModelArrayList = new ArrayList<>();
         boolean hasFolder = false;
         int position = 0;
@@ -162,15 +184,21 @@ public class StoragePathPlugin implements MethodCallHandler {
         Gson gson = new GsonBuilder().create();
         Type listType = new TypeToken<ArrayList<FileModel>>() {
         }.getType();
-        String json = gson.toJson(filesModelArrayList, listType);
+        final String json = gson.toJson(filesModelArrayList, listType);
         if (cursor != null) {
             cursor.close();
         }
-        result.success(json);
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                result.success(json);
+            }
+        });
     }
 
 
-    private void getVideoPath(Result result) {
+    private void getVideoPath(final Result result) {
 
         mediaModelArrayList = new ArrayList<>();
         boolean hasFolder = false;
@@ -242,15 +270,20 @@ public class StoragePathPlugin implements MethodCallHandler {
         Gson gson = new GsonBuilder().create();
         Type listType = new TypeToken<ArrayList<MediaModel>>() {
         }.getType();
-        String json = gson.toJson(mediaModelArrayList, listType);
+        final String json = gson.toJson(mediaModelArrayList, listType);
         if (cursor != null) {
             cursor.close();
         }
 
-        result.success(json);
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                result.success(json);
+            }
+        });
     }
 
-    private void getAudioPath(Result result) {
+    private void getAudioPath(final Result result) {
 
         mediaModelArrayList = new ArrayList<>();
         boolean hasFolder = false;
@@ -263,6 +296,7 @@ public class StoragePathPlugin implements MethodCallHandler {
         uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
 
         String[] projection = {
+                MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.AudioColumns.DATA,
                 MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.ALBUM,
@@ -279,9 +313,7 @@ public class StoragePathPlugin implements MethodCallHandler {
         while (cursor.moveToNext()) {
             absolutePathOfImage = cursor.getString(column_index_data);
             for (int i = 0; i < mediaModelArrayList.size(); i++) {
-                if (mediaModelArrayList.get(i) != null &&
-                        mediaModelArrayList.get(i).getFolder() != null &&
-                        mediaModelArrayList.get(i).getFolder().equals(new File(absolutePathOfImage).getParentFile().getName())) {
+                if (mediaModelArrayList.get(i).getFolder().equals(new File(absolutePathOfImage).getParentFile().getName())) {
                     hasFolder = true;
                     position = i;
                     break;
@@ -293,6 +325,7 @@ public class StoragePathPlugin implements MethodCallHandler {
             MetaData metaData = new MetaData();
             metaData.setDuration(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.DURATION)));
             metaData.setData(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.DATA)));
+            metaData.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.TITLE)));
             metaData.setAlbum(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.ALBUM)));
             metaData.setArtist(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.ARTIST)));
             metaData.setDateAdded(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.AudioColumns.DATE_ADDED)));
@@ -322,14 +355,20 @@ public class StoragePathPlugin implements MethodCallHandler {
         Gson gson = new GsonBuilder().create();
         Type listType = new TypeToken<ArrayList<MediaModel>>() {
         }.getType();
-        String json = gson.toJson(mediaModelArrayList, listType);
+        final String json = gson.toJson(mediaModelArrayList, listType);
         if (cursor != null) {
             cursor.close();
         }
-        result.success(json);
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                result.success(json);
+            }
+        });
     }
 
-    private void getFilesPath(Result result) {
+    private void getFilesPath(final Result result) {
         fileModelArrayList = new ArrayList<>();
         boolean hasFolder = false;
         int position = 0;
@@ -419,10 +458,16 @@ public class StoragePathPlugin implements MethodCallHandler {
         Gson gson = new GsonBuilder().create();
         Type listType = new TypeToken<ArrayList<FileModel>>() {
         }.getType();
-        String json = gson.toJson(fileModelArrayList, listType);
+        final String json = gson.toJson(fileModelArrayList, listType);
         if (cursor != null) {
             cursor.close();
         }
-        result.success(json);
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                result.success(json);
+            }
+        });
     }
 }

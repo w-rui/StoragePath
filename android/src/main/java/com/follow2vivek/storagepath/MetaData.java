@@ -13,6 +13,9 @@ public class MetaData {
     @SerializedName("displayName")
     @Expose
     String displayName;
+    @SerializedName("title")
+    @Expose
+    String title;
     @SerializedName("album")
     @Expose
     String album;
@@ -43,6 +46,14 @@ public class MetaData {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getAlbum() {
